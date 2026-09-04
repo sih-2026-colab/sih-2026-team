@@ -1,0 +1,11 @@
+# Python dependencies for SIH-Autonomous-Driving
+numpy
+opencv-python
+matplotlib
+scipy
+pandas
+scikit-learn
+torch
+torchvision
+tqdm
+pytest
