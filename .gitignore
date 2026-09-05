@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Data & results (keep .gitkeep)
+data/*
+!data/.gitkeep
+results/*
+!results/.gitkeep
+
+# MATLAB / Simulink
+*.slxc
+*.autosave
+*.asv
+*.mex*
+
+# RoadRunner exports
+roadrunner/**/*.fbx
+roadrunner/**/*.glb
+
+# OS
+.DS_Store
+Thumbs.db
