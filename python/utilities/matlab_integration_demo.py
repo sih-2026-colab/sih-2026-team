@@ -40,19 +40,18 @@ def main():
     else:
         print('Skipping MATLAB run. Set environment variable RUN_MATLAB=1 to execute MATLAB.')
 
-    # Read outputs (planning_output.mat)
-        # Prefer JSON outputs if MATLAB wrote them
-        if os.path.exists('planning_output.json'):
-            print('Found planning_output.json:')
-            print(open('planning_output.json','r',encoding='utf-8').read())
+    # Read outputs (planning_output.mat / planning_output.json)
+    if os.path.exists('planning_output.json'):
+        print('Found planning_output.json:')
+        print(open('planning_output.json', 'r', encoding='utf-8').read())
+    else:
+        results = load_mat_struct_array('planning_output.mat', var_name='plans')
+        if not results:
+            print('No planning_output.mat found or empty. If you ran MATLAB, check its current folder.')
         else:
-            results = load_mat_struct_array('planning_output.mat', var_name='plans')
-            if not results:
-                print('No planning_output.mat found or empty. If you ran MATLAB, check its current folder.')
-            else:
-                print('Planning results:')
-                for r in results:
-                    print(r)
+            print('Planning results:')
+            for r in results:
+                print(r)
 
 
 if __name__ == '__main__':

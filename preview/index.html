@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SIH 2026 — Urban Intersection AEB Preview</title>
+  <style>
+    :root {
+      --bg: #0e1116;
+      --panel: #161b22;
+      --line: #2b3440;
+      --text: #e6edf3;
+      --muted: #8b9bb0;
+      --asphalt: #2a3038;
+      --lane: #d8c36a;
+      --ego: #3d9cf0;
+      --ped: #e8a54b;
+      --cow: #c47a5a;
+      --car: #7aa2c8;
+      --brake: #d4675c;
+      --ok: #5fb37a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.45 "Segoe UI", system-ui, sans-serif; }
+    header {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+      padding: 16px 24px 8px; border-bottom: 1px solid var(--line);
+    }
+    header h1 { font-size: 18px; font-weight: 600; margin: 0; }
+    header p { margin: 0; color: var(--muted); }
+    .controls { display: flex; gap: 8px; align-items: center; padding: 12px 24px; }
+    button {
+      background: var(--panel); color: var(--text); border: 1px solid var(--line);
+      padding: 8px 14px; border-radius: 4px; cursor: pointer;
+    }
+    button.primary { border-color: var(--ego); color: var(--ego); }
+    button:hover { border-color: var(--text); }
+    .stage { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 0 24px 24px; height: calc(100% - 120px); }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; display: flex; flex-direction: column; min-height: 0; }
+    .panel h2 { margin: 0; padding: 10px 14px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; }
+    canvas { width: 100%; flex: 1; display: block; background: #12171d; }
+    .hud { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px 14px; border-top: 1px solid var(--line); color: var(--muted); font-variant-numeric: tabular-nums; }
+    .hud b { display: block; color: var(--text); font-size: 15px; }
+    .tag-off { color: var(--brake); }
+    .tag-on { color: var(--ok); }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Urban intersection prototype</h1>
+      <p>Same scene RoadRunner will play: ego meets a crossing pedestrian and a cow. Left is AEB off. Right is AEB on.</p>
+    </div>
+  </header>
+  <div class="controls">
+    <button class="primary" id="playBoth">Play both</button>
+    <button id="reset">Reset</button>
+    <span id="clock" style="color:var(--muted)">t = 0.00 s</span>
+  </div>
+  <div class="stage">
+    <section class="panel">
+      <h2>AEB OFF <span class="tag-off" id="statusOff">CRUISE</span></h2>
+      <canvas id="cvOff"></canvas>
+      <div class="hud">
+        <div>Speed <b id="vOff">10.0 m/s</b></div>
+        <div>TTC <b id="ttcOff">—</b></div>
+        <div>Threat <b id="thOff">—</b></div>
+        <div>Outcome <b id="outOff">running</b></div>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>AEB ON <span class="tag-on" id="statusOn">CRUISE</span></h2>
+      <canvas id="cvOn"></canvas>
+      <div class="hud">
+        <div>Speed <b id="vOn">10.0 m/s</b></div>
+        <div>TTC <b id="ttcOn">—</b></div>
+        <div>Threat <b id="thOn">—</b></div>
+        <div>Outcome <b id="outOn">running</b></div>
+      </div>
+    </section>
+  </div>
+  <script>
+    const SCENE = {
+      dt: 0.05, tEnd: 4.0, ttcBrake: 2.0, aBrake: 6.0, hit: 2.4,
+      ego: { x: 0, y: 0, vx: 10, vy: 0, length: 4.5, width: 1.8 },
+      objects: [
+        { id: 1, label: "car", x: 20, y: 3.6, vx: 8, vy: 0 },
+        { id: 2, label: "pedestrian", x: 16, y: -2.4, vx: 0, vy: 1.5 },
+        { id: 3, label: "cow", x: 30, y: 0.15, vx: 0.4, vy: 0 }
+      ]
+    };
+
+    function cloneScene() {
+      return {
+        t: 0,
+        mode: "CRUISE",
+        collision: null,
+        ego: { ...SCENE.ego },
+        objects: SCENE.objects.map(o => ({ ...o }))
+      };
+    }
+
+    function hypot(a, b) { return Math.sqrt(a * a + b * b); }
+
+    function threatTtc(world) {
+      let best = null, label = null;
+      for (const obj of world.objects) {
+        for (let i = 1; i <= 60; i++) {
+          const t = i * SCENE.dt;
+          const ex = world.ego.x + world.ego.vx * t;
+          const ey = world.ego.y + world.ego.vy * t;
+          const ox = obj.x + obj.vx * t;
+          const oy = obj.y + obj.vy * t;
+          if (hypot(ex - ox, ey - oy) <= SCENE.hit) {
+            if (best === null || t < best) { best = t; label = obj.label; }
+            break;
+          }
+        }
+      }
+      return { ttc: best, threat: label };
+    }
+
+    function collided(world) {
+      for (const obj of world.objects) {
+        if (hypot(world.ego.x - obj.x, world.ego.y - obj.y) <= SCENE.hit) return obj.label;
+      }
+      return null;
+    }
+
+    function step(world, aeb) {
+      if (world.collision || world.t > SCENE.tEnd) return world;
+      const { ttc, threat } = threatTtc(world);
+      world.ttc = ttc;
+      world.threat = threat;
+      if (aeb && ttc !== null && ttc < SCENE.ttcBrake) world.mode = "BRAKE";
+      const ax = world.mode === "BRAKE" ? -SCENE.aBrake : 0;
+      world.collision = collided(world);
+      if (world.collision) return world;
+      world.ego.vx = Math.max(0, world.ego.vx + ax * SCENE.dt);
+      world.ego.x += world.ego.vx * SCENE.dt;
+      world.ego.y += world.ego.vy * SCENE.dt;
+      for (const obj of world.objects) {
+        obj.x += obj.vx * SCENE.dt;
+        obj.y += obj.vy * SCENE.dt;
+      }
+      world.t += SCENE.dt;
+      return world;
+    }
+
+    function worldToCanvas(cv, x, y) {
+      const pad = 36;
+      const x0 = -6, x1 = 36, y0 = -10, y1 = 10;
+      const px = pad + (x - x0) / (x1 - x0) * (cv.width - 2 * pad);
+      const py = cv.height - (pad + (y - y0) / (y1 - y0) * (cv.height - 2 * pad));
+      return [px, py];
+    }
+
+    function drawWorld(cv, world, titleColor) {
+      const ctx = cv.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      const w = cv.clientWidth, h = cv.clientHeight;
+      cv.width = Math.max(1, w * dpr);
+      cv.height = Math.max(1, h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = "#12171d";
+      ctx.fillRect(0, 0, w, h);
+
+      const corners = [[-6, -1.75], [36, -1.75], [36, 1.75], [-6, 1.75]].map(([x, y]) => worldToCanvas(cv, x, y));
+      ctx.fillStyle = "#2a3038";
+      ctx.beginPath();
+      ctx.moveTo(corners[0][0], corners[0][1]);
+      corners.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+      ctx.closePath();
+      ctx.fill();
+
+      const cross = [[14, -10], [18, -10], [18, 10], [14, 10]].map(([x, y]) => worldToCanvas(cv, x, y));
+      ctx.beginPath();
+      ctx.moveTo(cross[0][0], cross[0][1]);
+      cross.slice(1).forEach(p => ctx.lineTo(p[0], p[1]));
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "#d8c36a";
+      ctx.setLineDash([10, 10]);
+      ctx.beginPath();
+      const a = worldToCanvas(cv, -6, 0), b = worldToCanvas(cv, 36, 0);
+      ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = "#e6edf3";
+      ctx.globalAlpha = 0.35;
+      for (let i = 0; i < 6; i++) {
+        const p1 = worldToCanvas(cv, 14.4 + i * 0.55, -1.75);
+        const p2 = worldToCanvas(cv, 14.4 + i * 0.55, 1.75);
+        ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      function marker(x, y, color, label, r = 7) {
+        const [px, py] = worldToCanvas(cv, x, y);
+        ctx.fillStyle = color;
+        ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#e6edf3";
+        ctx.font = "12px Segoe UI";
+        ctx.fillText(label, px + 10, py - 8);
+      }
+
+      const egoColor = world.mode === "BRAKE" ? "#d4675c" : "#3d9cf0";
+      const [ex, ey] = worldToCanvas(cv, world.ego.x, world.ego.y);
+      ctx.fillStyle = egoColor;
+      ctx.fillRect(ex - 16, ey - 7, 32, 14);
+      ctx.fillStyle = "#e6edf3";
+      ctx.fillText("EGO", ex - 14, ey - 12);
+
+      const colors = { car: "#7aa2c8", pedestrian: "#e8a54b", cow: "#c47a5a" };
+      for (const obj of world.objects) marker(obj.x, obj.y, colors[obj.label] || "#aaa", obj.label);
+
+      if (world.collision) {
+        ctx.fillStyle = "rgba(212,103,92,0.18)";
+        ctx.fillRect(0, 0, w, h);
+      }
+    }
+
+    const worlds = { off: cloneScene(), on: cloneScene() };
+    let playing = false, raf = 0, acc = 0, last = 0;
+
+    function paint() {
+      drawWorld(document.getElementById("cvOff"), worlds.off);
+      drawWorld(document.getElementById("cvOn"), worlds.on);
+      const t = Math.max(worlds.off.t, worlds.on.t);
+      document.getElementById("clock").textContent = "t = " + t.toFixed(2) + " s";
+      const fmt = (v) => v === null || v === undefined ? "—" : (typeof v === "number" ? v.toFixed(2) + " s" : v);
+      document.getElementById("statusOff").textContent = worlds.off.collision ? "COLLISION" : worlds.off.mode;
+      document.getElementById("statusOn").textContent = worlds.on.collision ? "COLLISION" : (worlds.on.ego.vx < 0.05 && worlds.on.mode === "BRAKE" ? "STOPPED" : worlds.on.mode);
+      document.getElementById("vOff").textContent = worlds.off.ego.vx.toFixed(1) + " m/s";
+      document.getElementById("vOn").textContent = worlds.on.ego.vx.toFixed(1) + " m/s";
+      document.getElementById("ttcOff").textContent = fmt(worlds.off.ttc);
+      document.getElementById("ttcOn").textContent = fmt(worlds.on.ttc);
+      document.getElementById("thOff").textContent = worlds.off.threat || "—";
+      document.getElementById("thOn").textContent = worlds.on.threat || "—";
+      document.getElementById("outOff").textContent = worlds.off.collision ? ("hit " + worlds.off.collision) : (worlds.off.t >= SCENE.tEnd ? "cleared" : "running");
+      document.getElementById("outOn").textContent = worlds.on.collision ? ("hit " + worlds.on.collision) : (worlds.on.ego.vx < 0.05 ? "no collision" : "running");
+    }
+
+    function tick(now) {
+      if (!playing) return;
+      if (!last) last = now;
+      acc += (now - last) / 1000;
+      last = now;
+      while (acc >= SCENE.dt) {
+        step(worlds.off, false);
+        step(worlds.on, true);
+        acc -= SCENE.dt;
+      }
+      paint();
+      const done = (worlds.off.collision || worlds.off.t >= SCENE.tEnd) &&
+                   (worlds.on.collision || worlds.on.ego.vx < 0.05 || worlds.on.t >= SCENE.tEnd);
+      if (done) { playing = false; return; }
+      raf = requestAnimationFrame(tick);
+    }
+
+    function play() {
+      cancelAnimationFrame(raf);
+      worlds.off = cloneScene();
+      worlds.on = cloneScene();
+      playing = true; last = 0; acc = 0;
+      threatTtc(worlds.off); threatTtc(worlds.on);
+      paint();
+      raf = requestAnimationFrame(tick);
+    }
+
+    function reset() {
+      playing = false;
+      cancelAnimationFrame(raf);
+      worlds.off = cloneScene();
+      worlds.on = cloneScene();
+      paint();
+    }
+
+    document.getElementById("playBoth").onclick = play;
+    document.getElementById("reset").onclick = reset;
+    window.addEventListener("resize", paint);
+    paint();
+  </script>
+</body>
+</html>

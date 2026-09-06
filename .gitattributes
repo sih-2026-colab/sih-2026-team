@@ -1,0 +1,16 @@
+# Normalize line endings
+* text=auto
+
+*.py text
+*.md text
+*.m text diff=matlab
+*.yml text
+*.json text
+*.txt text
+
+# Binary files
+*.slx binary
+*.mat binary
+*.png binary
+*.jpg binary
+*.fbx binary

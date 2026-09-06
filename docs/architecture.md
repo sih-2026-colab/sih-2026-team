@@ -26,11 +26,12 @@ The system follows a classic autonomous-driving stack:
    constant velocity. Also computes Time-To-Collision (TTC) vs. ego.
    Output: trajectories + TTC (MAT: `prediction_output.mat`).
 
-3. **Planning** (`matlab/planning/`, `simulink/planner.slx`)
-   MATLAB/Simulink side: generates ego waypoints from detections.
+3. **Planning / AEB** (`matlab/control/aeb_logic.m`, `matlab/simulink/build_ego_aeb.m`)
+   If predicted close-approach time is under 2 s, command full brake (6 m/s²).
+   Live runtime is Simulink + RoadRunner; Python/HTML use the same numbers.
 
-4. **Control** (`matlab/control/`)
-   Converts planned waypoints into vehicle actuator commands (PID/MPC).
+4. **Control** (`matlab/control/aeb_step.m`)
+   Converts CRUISE/BRAKE into longitudinal acceleration. PID/MPC can replace this later.
 
 5. **Evaluation** (`python/evaluation/`)
    Scores the pipeline:
@@ -62,6 +63,8 @@ perception → prediction → evaluation, and writes a JSON report to
 `roadrunner/` holds RoadRunner scene assets:
 - `village_road/` — low-speed rural scenario
 - `urban_intersection/` — intersection with VRUs (pedestrians, animals)
+
+Open `preview/index.html` for the judge-style dual run before RoadRunner is connected.
 
 ## Testing
 

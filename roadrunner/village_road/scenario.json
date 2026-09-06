@@ -1,0 +1,8 @@
+{
+  "name": "village_road",
+  "purpose": "Backup demo: animal in-lane on a narrow road.",
+  "actors": [
+    {"id": "ego", "class": "sedan", "x": 0.0, "y": 0.0, "vx": 8.0, "vy": 0.0},
+    {"id": 3, "class": "animal", "label": "cow", "x": 22.0, "y": 0.1, "vx": 0.3, "vy": 0.0}
+  ]
+}

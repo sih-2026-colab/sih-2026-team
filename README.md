@@ -44,10 +44,21 @@ python -m pip install -r requirements.txt pytest
 python -m pytest -q
 ```
 
+## Prototype preview (start here)
+
+The target demo is **VRU emergency braking** at an urban intersection.
+
+1. Open `preview/index.html` in a browser and click **Play both**.
+   Left = AEB off (collision). Right = AEB on (ego stops).
+2. Same physics in Python: `python -m python.prototype.aeb_sim`
+3. Same physics in MATLAB: `matlab/main/preview_aeb.m`
+4. When RoadRunner is installed: `matlab/main/run_roadrunner_demo.m`
+   Build `simulink/ego_aeb.slx` with `matlab/simulink/build_ego_aeb.m` and attach it to the ego actor. Scene layout lives in `roadrunner/urban_intersection/scenario.json`.
+
 ## Usage
 
 - Python pipeline: see `python/` submodules
-- Simulink integration: open `simulink/main_integration.slx`
+- Simulink: generate `simulink/ego_aeb.slx` from MATLAB (`build_ego_aeb`)
 
 MATLAB/Simulink integration demo
 --------------------------------

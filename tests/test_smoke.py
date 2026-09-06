@@ -15,8 +15,15 @@ def test_core_dependencies_available():
 
 
 def test_project_structure():
-    for rel in ["simulink/perception.slx", "simulink/planner.slx",
-                "simulink/main_integration.slx", "requirements.txt", "README.md"]:
+    for rel in [
+        "requirements.txt",
+        "README.md",
+        "preview/index.html",
+        "matlab/control/aeb_logic.m",
+        "matlab/simulink/build_ego_aeb.m",
+        "matlab/main/run_roadrunner_demo.m",
+        "roadrunner/urban_intersection/scenario.json",
+    ]:
         assert (ROOT / rel).exists(), f"missing: {rel}"
 
 
