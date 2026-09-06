@@ -32,5 +32,8 @@ function run_integration()
     disp('Running AEB prototype (MATLAB fallback if RoadRunner is absent)...');
     run_roadrunner_demo();
 
+    disp('Running control layer (PID longitudinal + AEB override)...');
+    run_control();
+
     disp('MATLAB integration run complete.');
 end
