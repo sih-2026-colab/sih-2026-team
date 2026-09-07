@@ -112,6 +112,10 @@ function safeSpace = ...
         drivable.freeMask & ...
         ~inflatedBlocked;
 
+    % Outside the observed grid is unknown, not zero-padded free space.
+    coverage = conv2(ones(size(blockedMask)), inflationKernel, 'same');
+    safeFreeMask = safeFreeMask & coverage == numel(inflationKernel);
+
 
     %% =====================================================
     % OUTPUT

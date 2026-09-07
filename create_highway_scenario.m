@@ -34,7 +34,7 @@ function actors = create_highway_scenario()
     actors(2).name = 'REAR';
     actors(2).type = 'car';
 
-    actors(2).x = -18;
+    actors(2).x = -60;
     actors(2).y = lane3;
 
     actors(2).vx = 70 / 3.6;
@@ -55,7 +55,7 @@ function actors = create_highway_scenario()
     actors(3).name = 'CUT-IN';
     actors(3).type = 'car';
 
-    actors(3).x = 4.1;
+    actors(3).x = 35;
     actors(3).y = lane2;
 
     actors(3).vx = 80 / 3.6;

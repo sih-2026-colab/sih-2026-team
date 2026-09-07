@@ -5,6 +5,7 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+.test-deps/
 
 # Data & results (keep .gitkeep)
 data/*
@@ -17,6 +18,8 @@ results/*
 *.autosave
 *.asv
 *.mex*
+*.log
+*.mp4
 
 # RoadRunner exports
 roadrunner/**/*.fbx

@@ -33,7 +33,7 @@ function [worldPoints, sensorPoints, sensorPose] = ...
     % 1. ROAD SURFACE
     %% =====================================================
 
-    xRoad = ego.x:1.0:(ego.x + 70);
+    xRoad = (ego.x-10):1.0:(ego.x + 80);
 
     yRoad = -1.75:0.75:8.75;
 
@@ -57,7 +57,7 @@ function [worldPoints, sensorPoints, sensorPose] = ...
     % 2. ROAD EDGES
     %% =====================================================
 
-    edgeX = ego.x:0.50:(ego.x + 70);
+    edgeX = (ego.x-10):0.50:(ego.x + 80);
 
     edgeZ = 0:0.25:0.75;
 
