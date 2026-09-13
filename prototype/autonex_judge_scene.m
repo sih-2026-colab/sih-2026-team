@@ -61,11 +61,17 @@ case 'update'
             set(scene.actors(k),'EdgeColor',color,'LineWidth',1.5);
         end
         set(scene.labels(k),'Position',[a.x a.y+W/2+.5 height+.3],'String',label,'Visible','on');
+        if k>1
+            direction=1; if mod(k,2)==0, direction=-1; end
+            set(scene.labels(k),'Position',[a.x a.y+direction*(W/2+1.2) height+.4], ...
+                'VerticalAlignment','middle','FontSize',9);
+        end
     end
     for k=numel(out.actors)+1:numel(scene.actors)
         scene.actors(k).Visible='off'; scene.labels(k).Visible='off';
     end
     xlim(ax,[low high]); ylim(ax,[-5 15]); zlim(ax,[-.1 4]);
+    if ~top, ax.CameraViewAngleMode='auto'; camzoom(ax,1.4); end
 end
 end
 

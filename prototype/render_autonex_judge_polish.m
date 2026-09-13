@@ -6,7 +6,8 @@ a.dt=.05; a.perceptionMode='camera_radar_lidar';
 for name={'hidden','detected','decision'}
     f=captures.(name{1}); a.events=f.events; a.eventTime=f.out.time;
     a=autonex_judge_update(a,f.state,f.out); a.live.Text='RECORDED SIMULATION';
-    a.tabs.SelectedTab=a.pathTab; drawnow; autonex_judge_viewport(a.top); drawnow;
+    a.tabs.SelectedTab=a.pathTab; drawnow; pause(.5);
+    autonex_judge_fit_axes(a.main); autonex_judge_fit_axes(a.top); drawnow; pause(.2);
     suffix=['occluded_' name{1}]; if strcmp(name{1},'decision'), suffix='decision'; end
     exportapp(a.figure,fullfile('results',['judge_p2_' suffix '.png']));
     fprintf('POLISH_CAPTURE %s t=%.2f\n',name{1},f.out.time);
@@ -15,8 +16,8 @@ end
 screen=get(groot,'ScreenSize'); desktop=a.figure.Position;
 sizes=[desktop(3:4);min(1100,screen(3)-40) min(650,screen(4)-120)];
 for k=1:2
-    a.figure.Position=[screen(1)+10 screen(2)+70 sizes(k,:)]; drawnow;
-    autonex_judge_viewport(a.top); drawnow;
+    a.figure.Position=[screen(1)+10 screen(2)+70 sizes(k,:)]; drawnow; pause(.5);
+    autonex_judge_fit_axes(a.main); autonex_judge_fit_axes(a.top); drawnow; pause(.2);
     assert(strcmp(a.figure.Scrollable,'off'));
     for h=[a.start a.pause a.reset a.rate a.scenario]
         r=getpixelposition(h,true); assert(r(1)>=0 && r(2)>=0 && r(1)+r(3)<=sizes(k,1)+1 && r(2)+r(4)<=sizes(k,2)+1);

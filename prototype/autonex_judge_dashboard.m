@@ -31,7 +31,7 @@ app.values=card(liveGrid,'DECISION',{'Planner','Maneuver','Guardian','Command','
 app.values=card(liveGrid,'PERCEPTION',{'Confirmed tracks','Candidates','Minimum clearance','Collision','Boundary violation'}, ...
     {'trackCount','candidateCount','minClearance','collision','boundaryViolation'},app.values,t);
 app.pathTab=uitab(app.tabs,'Title','Paths / AI decision','BackgroundColor',t.panel);
-pg=uigridlayout(app.pathTab,[3 1]); pg.RowHeight={105,100,'1x'}; pg.Padding=[5 5 5 5]; pg.RowSpacing=5; pg.BackgroundColor=t.panel;
+pg=uigridlayout(app.pathTab,[3 1]); pg.RowHeight={80,80,'1x'}; pg.Padding=[5 5 5 5]; pg.RowSpacing=5; pg.BackgroundColor=t.panel;
 app.risk=uitextarea(pg,'Editable','off','BackgroundColor',t.panel,'FontColor',t.text,'FontSize',12);
 app.scores=uitable(pg,'Data',cell(0,5),'ColumnName',{'Path / km/h','Status','Score','Conflicts','Reason'}, ...
     'ColumnWidth',{155,82,67,85,200},'RowName',{},'BackgroundColor',t.panel,'ForegroundColor',t.text,'FontSize',12);
