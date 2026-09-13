@@ -1,6 +1,24 @@
 function app=autonex_judge_update(app,state,out)
 % Read-only projection of real output. Does not advance or modify simulation.
 for k=1:2, app.scenes{k}=autonex_judge_scene('update',app.scenes{k},state,out); end
+d=autonex_judge_explain(out); app.explanation=d;
+app.overlay=autonex_judge_overlay('update',app.overlay,d,out);
+app.scenes{2}.candidates.Visible='off';
+app.risk.Value=splitlines(string(d.risk)); app.pathDetail.Value=splitlines(string(d.detail));
+app.scores.Data=d.rows; app.sensorText.Value=d.sensors;
+app.chain.Text=d.chain; app.chain.Tooltip=d.chain; app.chain.FontSize=10;
+if out.time<app.eventTime, app.events={}; app.eventState=struct; end
+if out.time~=app.eventTime
+    for key=fieldnames(d.transitions)'
+        name=key{1}; value=d.transitions.(name);
+        if ~isfield(app.eventState,name) || ~isequal(app.eventState.(name),value)
+            app.events{end+1}=sprintf('%05.2f s  %s',out.time,value);
+        end
+    end
+    app.events=app.events(max(1,end-9):end); app.eventState=d.transitions; app.eventTime=out.time;
+end
+if isempty(app.events), app.eventText.Value={'Awaiting state transitions'};
+else, app.eventText.Value=app.events; end
 for f=fieldnames(app.values)'
     key=f{1}; value='N/A';
     if isfield(out,key)

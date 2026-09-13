@@ -4,6 +4,7 @@ if nargin<1, scenario='occluded_pedestrian'; end
 if nargin<2, options=struct; end
 visible='on'; if isfield(options,'uiVisible'), visible=options.uiVisible; options=rmfield(options,'uiVisible'); end
 options.scenario=scenario;
+options.explainabilityTelemetry=true; options.sensorTelemetry=true;
 if ~isfield(options,'perceptionMode'), options.perceptionMode='camera_radar_lidar'; end
 if ~isfield(options,'duration'), options.duration=10; end
 opts=autonex_options(options); state=[]; out=[]; nextTime=0; running=false;
@@ -36,6 +37,7 @@ app.figure.UserData=api;
     function resetRun(name)
         running=false; stop(timerObject); state=[]; out=[]; nextTime=0;
         opts.scenario=name; app.scenario.Value=name;
+        app.events={}; app.eventState=struct; app.eventTime=-inf;
         for j=1:2, app.scenes{j}.followX=NaN; end
         stepOnce(); app.live.Text='●  READY'; app.pause.Text='PAUSE';
     end

@@ -106,13 +106,13 @@ if ~isempty(tracks)
     if found, intent=value; end
 end
 selected=[]; index=NaN; mode='NO_SAFE_SPACE'; stability='RESET'; guardian='NO_SAFE_SPACE';
-results=struct([]);
+results=struct([]); guardianResults=struct([]);
 if ~isempty(candidates)
     results=evaluate_2d_trajectories(candidates,tracks,fused,ego,intent,-1.75,8.75);
     [proposal,index,mode]=select_best_2d_trajectory(candidates,results);
     [selected,index,mode,state.selection,stability]=stabilize_trajectory_selection( ...
         candidates,results,proposal,index,mode,state.selection,t);
-    [selected,index,guardian]=cat_reflex_2d_guardian(candidates,results,selected,index,tracks,-1.75,8.75);
+    [selected,index,guardian,guardianResults]=cat_reflex_2d_guardian(candidates,results,selected,index,tracks,-1.75,8.75);
     if strcmp(guardian,'OVERRIDE_MINIMUM_RISK')
         selected=[];
         index=NaN;
@@ -235,6 +235,12 @@ out.surfaceHazardCells=0;
 if opts.laneIndependent, out.surfaceHazardCells=state.drivable.surfaceHazards.hazardCells; end
 out.actors=state.actors; out.candidates=candidates; out.selected=selected; out.tracks=tracks;
 out.worldModel=world;
+% Optional read-only judge telemetry: expose already computed results.
+if isfield(opts,'explainabilityTelemetry') && opts.explainabilityTelemetry
+    out.explainability=struct('plannerResults',results,'guardianResults',guardianResults, ...
+        'fused',fused,'ego',ego,'environment',environment,'intent',intent, ...
+        'sensorAvailability',opts.sensorAvailability,'sensorConfig',opts.sensorConfig);
+end
 if isfield(opts,'sensorTelemetry') && opts.sensorTelemetry && strcmp(opts.perceptionMode,'camera_radar_lidar')
     out.sensorFrame=frame;
 end

@@ -10,22 +10,38 @@ header=uigridlayout(g,[2 2]); header.Layout.Row=1; header.Layout.Column=[1 2];
 header.ColumnWidth={'1x',260}; header.RowHeight={40,26}; header.Padding=[0 0 0 0]; header.BackgroundColor=t.background;
 uilabel(header,'Text','AUTONEX  /  INDIADRIVE AI','FontName',t.font,'FontSize',28,'FontWeight','bold','FontColor',t.text);
 app.live=uilabel(header,'Text','●  READY','HorizontalAlignment','right','FontName',t.font,'FontSize',16,'FontColor',t.cyan);
-uilabel(header,'Text','Uncertainty-Aware Autonomous Driving for Unstructured Indian Roads', ...
+app.chain=uilabel(header,'Text','Uncertainty-Aware Autonomous Driving for Unstructured Indian Roads', ...
     'FontName',t.font,'FontSize',14,'FontColor',t.muted);
 app.time=uilabel(header,'Text','00.00 s','HorizontalAlignment','right','FontName',t.font,'FontSize',20,'FontColor',t.text);
 app.main=makeView(g,'01  /  LIVE DRIVING SCENE',2,t);
 app.top=makeView(g,'02  /  WORLD MODEL    •    confirmed tracks + candidate paths',3,t);
 right=uigridlayout(g,[4 1]); right.Layout.Row=[2 3]; right.Layout.Column=2;
-right.RowHeight={70,'1x','1x','1x'}; right.Padding=[0 0 0 0]; right.RowSpacing=12; right.BackgroundColor=t.background;
+right.RowHeight={70,'1x'}; right.Padding=[0 0 0 0]; right.RowSpacing=12; right.BackgroundColor=t.background;
 app.decision=uilabel(right,'Text','READY','FontName',t.font,'FontWeight','bold', ...
     'FontSize',30,'FontColor',t.cyan,'BackgroundColor',t.panel,'HorizontalAlignment','center');
+app.tabs=uitabgroup(right); app.tabs.Layout.Row=2;
+liveTab=uitab(app.tabs,'Title','Live','BackgroundColor',t.panel);
+liveGrid=uigridlayout(liveTab,[3 1]); liveGrid.Padding=[0 0 0 0]; liveGrid.BackgroundColor=t.panel;
 app.values=struct;
-app.values=card(right,'SYSTEM STATE',{'Speed','Target speed','Acceleration','Steering','Target Y'}, ...
+app.values=card(liveGrid,'SYSTEM STATE',{'Speed','Target speed','Acceleration','Steering','Target Y'}, ...
     {'speed','targetSpeed','ax','steeringAngle','targetY'},app.values,t);
-app.values=card(right,'DECISION',{'Planner','Maneuver','Guardian','Command','Emergency'}, ...
+app.values=card(liveGrid,'DECISION',{'Planner','Maneuver','Guardian','Command','Emergency'}, ...
     {'selectionMode','selectedName','guardianMode','longitudinalCommand','emergency'},app.values,t);
-app.values=card(right,'PERCEPTION',{'Confirmed tracks','Candidates','Minimum clearance','Collision','Boundary violation'}, ...
+app.values=card(liveGrid,'PERCEPTION',{'Confirmed tracks','Candidates','Minimum clearance','Collision','Boundary violation'}, ...
     {'trackCount','candidateCount','minClearance','collision','boundaryViolation'},app.values,t);
+app.pathTab=uitab(app.tabs,'Title','Paths','BackgroundColor',t.panel);
+pg=uigridlayout(app.pathTab,[4 1]); pg.RowHeight={110,'1x',100,35}; pg.Padding=[5 5 5 5]; pg.RowSpacing=5; pg.BackgroundColor=t.panel;
+app.risk=uitextarea(pg,'Editable','off','BackgroundColor',t.panel,'FontColor',t.text,'FontSize',12);
+app.scores=uitable(pg,'Data',cell(0,5),'ColumnName',{'Path / km/h','Status','Score','Conflicts','Reason'}, ...
+    'ColumnWidth',{125,80,65,85,200},'RowName',{},'BackgroundColor',t.panel,'ForegroundColor',t.text,'FontSize',12);
+app.pathDetail=uitextarea(pg,'Editable','off','BackgroundColor',t.panel,'FontColor',t.text,'FontSize',12);
+uilabel(pg,'Text','Green selected / cyan safe / red rejected','WordWrap','on','FontColor',t.muted,'FontSize',11);
+app.sensorTab=uitab(app.tabs,'Title','Sensors + log','BackgroundColor',t.panel);
+sg=uigridlayout(app.sensorTab,[3 1]); sg.RowHeight={'1x',30,'1x'}; sg.Padding=[5 5 5 5]; sg.BackgroundColor=t.panel;
+app.sensorText=uitextarea(sg,'Editable','off','BackgroundColor',t.panel,'FontColor',t.text,'FontSize',12);
+uilabel(sg,'Text','LIVE TRANSITIONS / latest 10','FontColor',t.cyan,'FontWeight','bold');
+app.eventText=uitextarea(sg,'Editable','off','BackgroundColor',t.panel,'FontColor',t.text,'FontSize',12);
+app.events={}; app.eventState=struct; app.eventTime=-inf; app.tabs.SelectedTab=app.pathTab;
 bar=uigridlayout(g,[1 7]); bar.Layout.Row=4; bar.Layout.Column=[1 2];
 bar.ColumnWidth={70,'2x',110,130,100,90,'1x'}; bar.Padding=[12 10 12 10]; bar.BackgroundColor=t.panel;
 uilabel(bar,'Text','SCENE','FontColor',t.muted,'FontWeight','bold');
@@ -40,6 +56,7 @@ app.figure=f; app.theme=t;
 app.scenes={autonex_judge_scene('create',app.main,t),autonex_judge_scene('create',app.top,t)};
 view(app.main,[-32 48]); view(app.top,2);
 app.top.DataAspectRatioMode='auto'; app.top.PlotBoxAspectRatioMode='auto';
+app.overlay=autonex_judge_overlay('create',app.top,t);
 end
 function ax=makeView(parent,titleText,row,t)
 p=uipanel(parent,'Title',titleText,'FontName',t.font,'FontSize',13,'FontWeight','bold', ...
