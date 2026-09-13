@@ -11,6 +11,15 @@ xy=points*R'+pose(1:2);
 % Remove max-range no-returns and known synthetic road-edge surfaces.
 valid=hypot(points(:,1),points(:,2))<79.9 & ...
     abs(xy(:,2)+1.75)>.08 & abs(xy(:,2)-8.75)>.08;
+g=autonex_road_geometry(actors);
+if g.junction
+    valid=hypot(points(:,1),points(:,2))<79.9;
+    for k=1:size(g.segments,1)
+        a=g.segments(k,1:2); d=g.segments(k,3:4)-a;
+        fraction=max(0,min(1,((xy-a)*d')/sum(d.^2)));
+        valid=valid & vecnorm(xy-(a+fraction.*d),2,2)>.08;
+    end
+end
 xy=xy(valid,:);
 if config.lidarNoise>0, xy=xy+config.lidarNoise*randn(size(xy)); end
 cloud=pointCloud([xy zeros(size(xy,1),1)]);

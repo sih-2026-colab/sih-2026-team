@@ -14,6 +14,9 @@ for k=1:numel(tracks)
     end
 end
 staticOccupied=drivable.occupiedMask & ~dynamic;
+if isfield(drivable,'roadGeometry')
+    staticOccupied=staticOccupied | ~autonex_road_contains(drivable.X,drivable.Y,drivable.roadGeometry);
+end
 if isfield(drivable,'surfaceHazards')
     staticOccupied=staticOccupied | drivable.surfaceHazards.mask;
 end

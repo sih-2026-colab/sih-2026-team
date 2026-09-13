@@ -18,16 +18,16 @@ switch name
     case 'occluded_pedestrian'
         % At t=0, ego-to-pedestrian ray passes through the parked car.
         % Pedestrian starts beyond its front bumper and walks toward Y=7.
-        % Depth scan respects this occlusion; radar/RGB/thermal currently do
-        % NOT reject actors hidden by other actors. See coverage notes.
+        % Optical/thermal extent visibility and direct-path radar LOS now
+        % respect opaque blockers; depth retains first-return occlusion.
         specs={ ...
             'PARKED-OCCLUDER','car',24,4.5,0,0,.2; ...
             'EMERGING-PEDESTRIAN','pedestrian',28,4,0,1,.7};
     case 'unsignalized_intersection'
-        % Lightweight crossing conflict at X=32, not a junction road mesh.
+        % Unmarked cross junction; road union is attached below as scene data.
         % Crossing car and unbraked ego reach (32,7) at 4 s.
-        % Heading records motion direction; existing non-ego boxes remain
-        % axis-aligned and road boundaries remain the straight-road strip.
+        % Heading records motion direction. Ego traverses the east-west arm;
+        % crossing users occupy the connected north-south arm without signals.
         specs={ ...
             'CROSSING-CAR','car',32,-5,0,3,.5; ...
             'JUNCTION-PEDESTRIAN','pedestrian',38,12,0,-1,.6};
@@ -54,5 +54,14 @@ for k=1:size(specs,1)
     actor.heading=atan2(actor.vy,actor.vx);
     actor.uncertainty=specs{k,7};
     actors(k+1)=actor; %#ok<AGROW>
+end
+if strcmp(name,'unsignalized_intersection')
+    g=struct('junction',true,'rectangles',[-inf inf -1.75 8.75;27 42 -18 22], ...
+        'segments',[-1e5 -1.75 27 -1.75;42 -1.75 1e5 -1.75; ...
+        -1e5 8.75 27 8.75;42 8.75 1e5 8.75; ...
+        27 -18 27 -1.75;42 -18 42 -1.75;27 8.75 27 22;42 8.75 42 22; ...
+        27 -18 42 -18;27 22 42 22], ...
+        'lateralBounds',[-18 22],'conflictZone',[27 42 -1.75 8.75]);
+    for k=1:numel(actors), actors(k).roadGeometry=g; end
 end
 end

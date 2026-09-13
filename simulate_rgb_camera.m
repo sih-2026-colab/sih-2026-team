@@ -204,6 +204,9 @@ function detections = ...
         % SAVE DETECTION
         %% =================================================
 
+        visibilityResult=autonex_actor_visibility([ego.x ego.y],actors,i,'camera',find([actors.id]==ego.id,1));
+        if ~visibilityResult.visible, continue; end
+        confidence=confidence*(.5+.5*visibilityResult.visibleFraction);
         count = count + 1;
 
 

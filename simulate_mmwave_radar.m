@@ -138,6 +138,8 @@ function detections = simulate_mmwave_radar( ...
         % SAVE DETECTION
         %% -------------------------------------------------
 
+        visibilityResult=autonex_actor_visibility([ego.x ego.y],actors,i,'radar',find([actors.id]==ego.id,1));
+        if ~visibilityResult.visible, continue; end
         detectionCount = ...
             detectionCount + 1;
 

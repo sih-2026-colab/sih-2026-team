@@ -4,10 +4,15 @@ function [points,pose] = simulate_autonex_depth_scan(actors)
 ego=actors(1); origin=[ego.x ego.y];
 angle=(0:.1:359.9)'*pi/180; direction=[cos(angle) sin(angle)];
 range=80*ones(size(angle));
+geometry=autonex_road_geometry(actors);
 % Road edges are physical scene geometry; lane paint is not sensed or used.
+if geometry.junction
+    range=autonex_road_ray_range(origin,direction,geometry);
+else
 for edge=[-1.75 8.75]
     hit=(edge-origin(2))./direction(:,2);
     hit(hit<=0)=inf; range=min(range,hit);
+end
 end
 for k=2:numel(actors)
     if strcmpi(actors(k).type,'pothole'), continue; end

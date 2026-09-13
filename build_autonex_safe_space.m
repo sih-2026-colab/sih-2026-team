@@ -3,7 +3,16 @@ function [drivable,safeSpace,corridor] = build_autonex_safe_space(actors)
 [points,pose] = simulate_autonex_depth_scan(actors);
 map = occupancyMap3D(4);
 insertPointCloud(map,pose,pointCloud(points),80,[0.30 0.75]);
-drivable = extract_drivable_space_from_3d(map,actors(1),70,-1.75,8.75,8);
+geometry=autonex_road_geometry(actors);
+drivable = extract_drivable_space_from_3d(map,actors(1),70,geometry.lateralBounds(1),geometry.lateralBounds(2),8);
+if geometry.junction
+    outside=~autonex_road_contains(drivable.X,drivable.Y,geometry);
+    drivable.occupiedMask=drivable.occupiedMask | outside;
+    drivable.freeMask=drivable.freeMask & ~outside;
+    drivable.unknownMask=drivable.unknownMask & ~outside;
+    drivable.classification(outside)=1;
+    drivable.roadGeometry=geometry;
+end
 surface=simulate_road_surface_cloud(actors,drivable);
 hazards=detect_road_surface_hazards(surface,drivable.xValues,drivable.yValues);
 drivable.occupiedMask=drivable.occupiedMask | hazards.mask;

@@ -235,6 +235,9 @@ out.surfaceHazardCells=0;
 if opts.laneIndependent, out.surfaceHazardCells=state.drivable.surfaceHazards.hazardCells; end
 out.actors=state.actors; out.candidates=candidates; out.selected=selected; out.tracks=tracks;
 out.worldModel=world;
+if isfield(opts,'sensorTelemetry') && opts.sensorTelemetry && strcmp(opts.perceptionMode,'camera_radar_lidar')
+    out.sensorFrame=frame;
+end
 out.collision=false; out.minClearance=inf;
 if isfield(opts,'validationTelemetry') && opts.validationTelemetry
     out.collisionActorIDs=[];
