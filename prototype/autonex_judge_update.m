@@ -1,20 +1,24 @@
 function app=autonex_judge_update(app,state,out)
 % Read-only projection of real output. Does not advance or modify simulation.
 for k=1:2, app.scenes{k}=autonex_judge_scene('update',app.scenes{k},state,out); end
+autonex_judge_fit_axes(app.main); autonex_judge_fit_axes(app.top);
 d=autonex_judge_explain(out); app.explanation=d;
 app.overlay=autonex_judge_overlay('update',app.overlay,d,out);
 app.scenes{2}.candidates.Visible='off';
-app.risk.Value=splitlines(string(d.risk)); app.pathDetail.Value=splitlines(string(d.detail));
+app.risk.Value=splitlines(string(d.risk)); app.pathDetail.Value=["SELECTED PATH / "+out.guardianMode;splitlines(string(d.detail))];
 app.scores.Data=d.rows; app.sensorText.Value=d.sensors;
-app.chain.Text=d.chain; app.chain.Tooltip=d.chain; app.chain.FontSize=10;
+app.chain.Tooltip=d.chain; app.chain.FontSize=12;
 if out.time<app.eventTime, app.events={}; app.eventState=struct; end
 if out.time~=app.eventTime
+    changes={};
     for key=fieldnames(d.transitions)'
         name=key{1}; value=d.transitions.(name);
         if ~isfield(app.eventState,name) || ~isequal(app.eventState.(name),value)
-            app.events{end+1}=sprintf('%05.2f s  %s',out.time,value);
+            changes{end+1}=value; %#ok<AGROW>
         end
     end
+    % Group simultaneous changes; preserve every observed action and timestamp.
+    if ~isempty(changes), app.events{end+1}=sprintf('%05.2f s  %s',out.time,strjoin(changes,' | ')); end
     app.events=app.events(max(1,end-9):end); app.eventState=d.transitions; app.eventTime=out.time;
 end
 if isempty(app.events), app.eventText.Value={'Awaiting state transitions'};
@@ -44,9 +48,14 @@ switch mode
     case {'BRAKE','STOP'}, color=app.theme.red;
 end
 app.decision.FontColor=color;
+rgb=round(color*255);
+app.chain.Interpreter='html';
+app.chain.Text=sprintf(['<span style="color:#8296A4">PERCEPTION &gt; TRACK &gt; PREDICT &gt; RISK &gt; PLAN &gt; GUARDIAN &gt; </span>' ...
+    '<span style="color:#%02X%02X%02X"><b>ACTION / %s</b></span>'],rgb(1),rgb(2),rgb(3),mode);
 for key={'collision','boundaryViolation','emergency'}
     app.values.(key{1}).FontColor=app.theme.text;
     if out.(key{1}), app.values.(key{1}).FontColor=app.theme.red; end
 end
-app.footer.Text=sprintf('dt %.2f s  /  %s',app.dt,app.perceptionMode);
+app.footer.Text=sprintf('dt %.2f s / LIVE CORE',app.dt);
+app.footer.Tooltip=app.perceptionMode;
 end

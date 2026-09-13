@@ -6,13 +6,15 @@ case 'create'
     scene.free=plot3(ax,nan,nan,nan,'.','Color',[.15 .28 .30],'MarkerSize',3);
     scene.corridor=plot3(ax,nan,nan,nan,'--','Color',[.26 .45 .48],'LineWidth',1);
     scene.candidates=plot3(ax,nan,nan,nan,'Color',[.34 .43 .49],'LineWidth',.6);
-    scene.selected=plot3(ax,nan,nan,nan,'Color',t.green,'LineWidth',3);
+    scene.selected=plot3(ax,nan,nan,nan,'Color',t.green,'LineWidth',4);
     scene.tracks=plot3(ax,nan,nan,nan,'s','Color',t.amber,'MarkerSize',9,'LineWidth',1.5,'LineStyle','none');
     scene.actors=gobjects(0); scene.labels=gobjects(0);
 case 'update'
     scene=varargin{1}; state=varargin{2}; out=varargin{3}; ax=scene.axes; t=scene.theme;
     if isnan(scene.followX), scene.followX=out.x; else, scene.followX=.85*scene.followX+.15*out.x; end
-    low=scene.followX-12; high=scene.followX+65;
+    low=scene.followX-8; high=scene.followX+43;
+    top=strcmp(ax.Tag,'WorldModel');
+    if top, low=out.x-15; high=out.x+55; end
     geometry=autonex_road_geometry(out.actors); vertices=[]; faces=[];
     for k=1:size(geometry.rectangles,1)
         r=geometry.rectangles(k,:); a=max(low,r(1)); b=min(high,r(2));
@@ -54,6 +56,10 @@ case 'update'
         color=t.muted; if k==1, color=t.cyan; end
         set(scene.actors(k),'FaceColor',color);
         label=a.name; if k==1, label='EGO'; end
+        if top
+            label=sprintf('%s %d',upper(a.type),a.id); if k==1, label='EGO'; end
+            set(scene.actors(k),'EdgeColor',color,'LineWidth',1.5);
+        end
         set(scene.labels(k),'Position',[a.x a.y+W/2+.5 height+.3],'String',label,'Visible','on');
     end
     for k=numel(out.actors)+1:numel(scene.actors)
@@ -62,3 +68,4 @@ case 'update'
     xlim(ax,[low high]); ylim(ax,[-5 15]); zlim(ax,[-.1 4]);
 end
 end
+
