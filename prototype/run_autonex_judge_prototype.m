@@ -7,20 +7,23 @@ options.scenario=scenario;
 options.explainabilityTelemetry=true; options.sensorTelemetry=true;
 if ~isfield(options,'perceptionMode'), options.perceptionMode='camera_radar_lidar'; end
 if ~isfield(options,'duration'), options.duration=10; end
-opts=autonex_options(options); state=[]; out=[]; nextTime=0; running=false;
+opts=autonex_options(options); state=[]; out=[]; nextTime=0; running=false; metrics=[];
 app=autonex_judge_dashboard(visible); app.scenario.Value=scenario;
 app.dt=opts.dt; app.perceptionMode=opts.perceptionMode;
+app=autonex_demo_card(app,scenario,metrics,false); app.tabs.SelectedTab=app.demoTab;
 timerObject=timer('ExecutionMode','fixedSpacing','Period',opts.dt,'BusyMode','drop', ...
     'TimerFcn',@tick,'ErrorFcn',@onError);
 app.start.ButtonPushedFcn=@(~,~)startRun(); app.pause.ButtonPushedFcn=@(~,~)pauseRun();
 app.reset.ButtonPushedFcn=@(~,~)resetRun(app.scenario.Value);
 app.scenario.ValueChangedFcn=@(~,~)resetRun(app.scenario.Value);
+app.next.ButtonPushedFcn=@(~,~)nextScenario();
 app.rate.ValueChangedFcn=@(~,~)setRate(); app.figure.CloseRequestFcn=@(~,~)closeRun();
 api=struct('figure',app.figure,'start',@startRun,'pause',@pauseRun,'reset',@resetRun, ...
-    'step',@stepOnce,'snapshot',@snapshot,'close',@closeRun);
+    'step',@stepOnce,'snapshot',@snapshot,'close',@closeRun,'next',@nextScenario);
 app.figure.UserData=api;
     function startRun()
-        if nextTime>opts.duration, resetRun(app.scenario.Value); end
+        if nextTime>opts.duration+1e-8, resetRun(app.scenario.Value); end
+        app.tabs.SelectedTab=app.pathTab;
         if ~running, running=true; app.live.Text='●  LIVE SIMULATION'; app.pause.Text='PAUSE'; start(timerObject); end
     end
     function pauseRun()
@@ -35,23 +38,35 @@ app.figure.UserData=api;
         if wasRunning, start(timerObject); end
     end
     function resetRun(name)
-        running=false; stop(timerObject); state=[]; out=[]; nextTime=0;
+        running=false; stop(timerObject); state=[]; out=[]; nextTime=0; metrics=[];
         opts.scenario=name; app.scenario.Value=name;
         app.events={}; app.eventState=struct; app.eventTime=-inf;
         for j=1:2, app.scenes{j}.followX=NaN; end
         stepOnce(); app.live.Text='●  READY'; app.pause.Text='PAUSE';
+        app.tabs.SelectedTab=app.demoTab;
+    end
+    function nextScenario()
+        c=autonex_demo_catalog(); i=find(strcmp({c.id},opts.scenario),1);
+        resetRun(c(mod(i,numel(c))+1).id);
     end
     function stepOnce()
-        if nextTime>opts.duration, return; end
+        if nextTime>opts.duration+1e-8, return; end
         [state,out]=autonex_step(state,nextTime,opts);
-        app=autonex_judge_update(app,state,out); nextTime=nextTime+opts.dt;
-        drawnow limitrate;
+        app=autonex_judge_update(app,state,out); metrics=autonex_demo_metrics(metrics,out);
+        nextTime=nextTime+opts.dt;
+        complete=nextTime>opts.duration+1e-8;
+        app=autonex_demo_card(app,opts.scenario,metrics,complete);
+        if complete
+            app.live.Text='●  COMPLETE';
+            if app.demoMode.Value, app.tabs.SelectedTab=app.demoTab; end
+        end
+        drawnow;
     end
     function tick(~,~)
         if ~running, return; end
         try
             stepOnce();
-            if nextTime>opts.duration
+            if nextTime>opts.duration+1e-8
                 running=false; stop(timerObject); app.live.Text='●  COMPLETE';
             end
         catch err
@@ -64,7 +79,7 @@ app.figure.UserData=api;
         running=false; app.live.Text='●  ERROR';
     end
     function s=snapshot()
-        s=struct('state',state,'out',out,'app',app,'running',running,'nextTime',nextTime);
+        s=struct('state',state,'out',out,'app',app,'running',running,'nextTime',nextTime,'metrics',metrics);
     end
     function closeRun()
         if isvalid(timerObject), stop(timerObject); delete(timerObject); end

@@ -42,11 +42,17 @@ app.sensorText=uitextarea(sg,'Editable','off','BackgroundColor',t.panel,'FontCol
 uilabel(sg,'Text','LIVE TRANSITIONS / latest 10','FontColor',t.cyan,'FontWeight','bold');
 app.eventText=uitextarea(sg,'Editable','off','BackgroundColor',t.panel,'FontColor',t.text,'FontSize',12);
 app.events={}; app.eventState=struct; app.eventTime=-inf; app.tabs.SelectedTab=app.pathTab;
+app.demoTab=uitab(app.tabs,'Title','Scenario','BackgroundColor',t.panel);
+dg=uigridlayout(app.demoTab,[4 1]); dg.RowHeight={'1x','1x',30,30}; dg.BackgroundColor=t.panel; dg.Padding=[5 5 5 5];
+app.demoIntro=uitextarea(dg,'Editable','off','BackgroundColor',t.panel,'FontColor',t.cyan,'FontSize',12);
+app.demoResult=uitextarea(dg,'Editable','off','BackgroundColor',t.panel,'FontColor',t.text,'FontSize',12);
+app.demoMode=uicheckbox(dg,'Text','DEMO MODE / show result at finish','Value',true,'FontColor',t.text);
+app.next=uibutton(dg,'Text','NEXT SCENARIO','BackgroundColor',t.border,'FontColor',t.text);
 bar=uigridlayout(g,[1 7]); bar.Layout.Row=4; bar.Layout.Column=[1 2];
 bar.ColumnWidth={48,'1x',80,80,80,65,125}; bar.Padding=[8 6 8 6]; bar.BackgroundColor=t.panel;
 uilabel(bar,'Text','SCENE','FontColor',t.muted,'FontWeight','bold');
-app.scenario=uidropdown(bar,'Items',{'occluded_pedestrian','unsignalized_intersection', ...
-    'animal_crossing','dense_market','missing_lane','cut_in'},'BackgroundColor',t.background,'FontColor',t.text);
+catalog=autonex_demo_catalog();
+app.scenario=uidropdown(bar,'Items',{catalog.title},'ItemsData',{catalog.id},'BackgroundColor',t.background,'FontColor',t.text);
 app.start=uibutton(bar,'Text','START','BackgroundColor',t.cyan,'FontWeight','bold');
 app.pause=uibutton(bar,'Text','PAUSE','BackgroundColor',t.border,'FontColor',t.text);
 app.reset=uibutton(bar,'Text','RESET','BackgroundColor',t.border,'FontColor',t.text);
