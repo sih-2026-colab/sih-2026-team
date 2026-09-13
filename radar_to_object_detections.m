@@ -16,10 +16,7 @@ function detectionCells = ...
         sensorName = detections(i).sensor;
 
         %% -------------------------------------------------
-        % FOR NOW:
-        % use FRONT + REAR radar only.
-        %
-        % Corner radar fusion comes later.
+        % Preserve all four sensor identities for multi-sensor association.
         %% -------------------------------------------------
 
         if strcmp(sensorName,'FRONT_RADAR')
@@ -29,6 +26,11 @@ function detectionCells = ...
         elseif strcmp(sensorName,'REAR_RADAR')
 
             sensorIndex = 2;
+
+        elseif strcmp(sensorName,'LEFT_CORNER_RADAR')
+            sensorIndex = 3;
+        elseif strcmp(sensorName,'RIGHT_CORNER_RADAR')
+            sensorIndex = 4;
 
         else
 
@@ -44,13 +46,14 @@ function detectionCells = ...
                 detections(i), ego);
 
 
-        %% Approximate Cartesian measurement covariance
-        %
-        % Later we will calculate this properly from
-        % range + angle uncertainty.
+        %% Propagate simulated range/azimuth noise into Cartesian covariance.
+        % The third coordinate constrains this planar model to z=0.
 
-        measurementNoise = ...
-            diag([0.40^2 0.40^2]);
+        theta=deg2rad(detections(i).angle+detections(i).mountAngle);
+        range=abs(detections(i).range);
+        J=[cos(theta) -range*sin(theta); sin(theta) range*cos(theta)];
+        xyNoise=J*diag([.15^2 deg2rad(.5)^2])*J'+1e-6*eye(2);
+        measurementNoise=blkdiag(xyNoise,.01);
 
 
         %% Create detection
@@ -61,7 +64,7 @@ function detectionCells = ...
         detectionCells{end+1,1} = ...
             objectDetection( ...
                 time, ...
-                [globalX; globalY], ...
+                [globalX; globalY; 0], ...
                 'MeasurementNoise', ...
                 measurementNoise, ...
                 'SensorIndex', ...

@@ -400,7 +400,7 @@ for t = 0:dt:T
         selectedCandidate, confirmedTracks, dashboard);
     drawnow;
     if ~isgraphics(scene.figure), break; end
-    if exportVideo, writeVideo(video, getframe(scene.figure)); end
+    if exportVideo, writeVideo(video, autonex_video_frame(scene.figure)); end
 
     %% =====================================================
     % PLANNER DEBUG OUTPUT EVERY 0.25 s

@@ -14,6 +14,9 @@ for k=1:numel(tracks)
     end
 end
 staticOccupied=drivable.occupiedMask & ~dynamic;
+if isfield(drivable,'surfaceHazards')
+    staticOccupied=staticOccupied | drivable.surfaceHazards.mask;
+end
 observed=drivable.freeMask;
 drivable.freeMask=(observed | prior) & ~staticOccupied;
 drivable.occupiedMask=staticOccupied;

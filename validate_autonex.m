@@ -22,7 +22,7 @@ for k=1:numel(cases)
         'emergencySteps',r.emergencySteps);
     if isempty(summaries), summaries=summary; else, summaries(end+1)=summary; end %#ok<AGROW>
 end
-fid=fopen('results/validation_summary.json','w'); cleanup=onCleanup(@()fclose(fid)); %#ok<NASGU>
+fid=fopen('results/matlab_validation_summary.json','w'); cleanup=onCleanup(@()fclose(fid)); %#ok<NASGU>
 fprintf(fid,'%s',jsonencode(summaries,PrettyPrint=true));
 disp(struct2table(summaries));
 if ~all([summaries.passed]), warning('AutoNex:Validation','Some scenarios failed; inspect saved evidence.'); end

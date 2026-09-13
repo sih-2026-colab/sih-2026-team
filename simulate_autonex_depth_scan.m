@@ -10,8 +10,10 @@ for edge=[-1.75 8.75]
     hit(hit<=0)=inf; range=min(range,hit);
 end
 for k=2:numel(actors)
-    low=[actors(k).x-2.25 actors(k).y-.95];
-    high=[actors(k).x+2.25 actors(k).y+.95];
+    if strcmpi(actors(k).type,'pothole'), continue; end
+    [L,W]=autonex_actor_size(actors(k));
+    low=[actors(k).x-L/2 actors(k).y-W/2];
+    high=[actors(k).x+L/2 actors(k).y+W/2];
     a=(low-origin)./direction; b=(high-origin)./direction;
     near=max(min(a,b),[],2); far=min(max(a,b),[],2);
     hit=near; hit(far<max(near,0) | near<=0)=inf;

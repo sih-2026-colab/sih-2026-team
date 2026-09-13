@@ -4,7 +4,7 @@ switch action
     case 'create'
         actors = varargin{1}; low = varargin{2}; high = varargin{3};
         scene.figure = figure('Name','AutoNex | Live driving simulation', ...
-            'Color',[0.055 0.075 0.11], 'Position',[80 80 1280 720], 'Resize','off');
+            'Color',[0.055 0.075 0.11], 'Units','normalized','Position',[.04 .08 .90 .80], 'Resize','off');
         scene.axes = axes('Parent',scene.figure,'Position',[0.04 0.10 0.92 0.73]);
         ax = scene.axes;
         hold(ax,'on'); axis(ax,'equal');
@@ -17,7 +17,9 @@ switch action
         for y = [low high]
             plot3(ax,[-150 500],[y y],[.02 .02],'Color',[1 .85 .3],'LineWidth',2);
         end
-        for y = [1.75 5.25]
+        laneMarkers=[1.75 5.25];
+        if numel(varargin)>=4 && ~varargin{4}, laneMarkers=[]; end
+        for y = laneMarkers
             for x = -150:9:500
                 plot3(ax,[x x+4],[y y],[.025 .025],'w','LineWidth',2);
             end

@@ -1,0 +1,28 @@
+{
+  "name": "urban_intersection",
+  "purpose": "SIH 2026 demo: ego AV brakes for a crossing pedestrian; cow remains in-lane as a second VRU.",
+  "roadrunner": {
+    "scene_file": "urban_intersection.rrscene",
+    "scenario_file": "urban_intersection.rrscenario",
+    "ego_behavior": "../../simulink/ego_aeb.slx",
+    "notes": "Build this scene in RoadRunner Scene Editor, then in Scenario Editor assign MATLAB/Simulink platform to ego with ego_aeb.slx."
+  },
+  "map": {
+    "road_axis": "x",
+    "lane_half_width_m": 1.75,
+    "intersection_x_m": 16.0,
+    "cross_street_half_width_m": 4.0
+  },
+  "timing": {
+    "dt": 0.05,
+    "t_end": 4.0,
+    "ttc_brake_s": 2.0,
+    "a_brake_mps2": 6.0
+  },
+  "actors": [
+    {"id": "ego", "class": "sedan", "x": 0.0, "y": 0.0, "vx": 10.0, "vy": 0.0, "controlled_by": "simulink"},
+    {"id": 1, "class": "car", "x": 20.0, "y": 3.6, "vx": 8.0, "vy": 0.0, "controlled_by": "roadrunner"},
+    {"id": 2, "class": "pedestrian", "x": 16.0, "y": -2.4, "vx": 0.0, "vy": 1.5, "controlled_by": "roadrunner"},
+    {"id": 3, "class": "animal", "label": "cow", "x": 30.0, "y": 0.15, "vx": 0.4, "vy": 0.0, "controlled_by": "roadrunner"}
+  ]
+}

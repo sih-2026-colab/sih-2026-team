@@ -1,178 +1,28 @@
-function trajectory = generate_2d_trajectory( ...
-    ego, ...
-    targetSpeedKmh, ...
-    targetY, ...
-    horizons, ...
-    maneuverTime)
-
-    %% =====================================================
-    % AUTONEX 2-D CANDIDATE TRAJECTORY GENERATOR
-    %
-    % Longitudinal:
-    % acceleration-limited speed transition
-    %
-    % Lateral:
-    % smooth quintic trajectory
-    %
-    % s(t) = 10*tau^3 - 15*tau^4 + 6*tau^5
-    %% =====================================================
-
-    n = length(horizons);
-
-
-    trajectory.time = ...
-        horizons;
-
-
-    trajectory.x = ...
-        zeros(1,n);
-
-
-    trajectory.y = ...
-        zeros(1,n);
-
-
-    trajectory.vx = ...
-        zeros(1,n);
-
-
-    trajectory.vy = ...
-        zeros(1,n);
-
-
-    trajectory.ay = ...
-        zeros(1,n);
-
-
-    trajectory.targetSpeedKmh = ...
-        targetSpeedKmh;
-
-
-    trajectory.targetY = ...
-        targetY;
-
-
-    trajectory.maneuverTime = ...
-        maneuverTime;
-
-
-    %% =====================================================
-    % LATERAL DISPLACEMENT
-    %% =====================================================
-
-    deltaY = ...
-        targetY - ego.y;
-
-
-    %% =====================================================
-    % GENERATE FUTURE STATES
-    %% =====================================================
-
-    for j = 1:n
-
-        h = ...
-            horizons(j);
-
-
-        %% -------------------------------------------------
-        % LONGITUDINAL MOTION
-        %% -------------------------------------------------
-
-        [futureX, ...
-         futureSpeed, ...
-         ~] = ...
-            predict_ego_candidate_state( ...
-                ego.x, ...
-                ego.vx, ...
-                targetSpeedKmh, ...
-                h);
-
-
-        trajectory.x(j) = ...
-            futureX;
-
-
-        trajectory.vx(j) = ...
-            futureSpeed;
-
-
-        %% -------------------------------------------------
-        % LATERAL MOTION
-        %% -------------------------------------------------
-
-        if maneuverTime <= 0 || ...
-           abs(deltaY) < 0.001
-
-            trajectory.y(j) = ...
-                ego.y;
-
-            trajectory.vy(j) = 0;
-
-            trajectory.ay(j) = 0;
-
-            continue;
-
-        end
-
-
-        tau = ...
-            min(h / maneuverTime, 1);
-
-
-        %% Quintic smooth-step position
-
-        blend = ...
-            10*tau^3 - ...
-            15*tau^4 + ...
-            6*tau^5;
-
-
-        trajectory.y(j) = ...
-            ego.y + ...
-            deltaY * blend;
-
-
-        %% -----------------------------------------------
-        % LATERAL VELOCITY
-        %% -----------------------------------------------
-
-        if h < maneuverTime
-
-            dBlend = ...
-                30*tau^2 - ...
-                60*tau^3 + ...
-                30*tau^4;
-
-
-            trajectory.vy(j) = ...
-                deltaY * ...
-                dBlend / ...
-                maneuverTime;
-
-
-            %% -------------------------------------------
-            % LATERAL ACCELERATION
-            %% -------------------------------------------
-
-            ddBlend = ...
-                60*tau - ...
-                180*tau^2 + ...
-                120*tau^3;
-
-
-            trajectory.ay(j) = ...
-                deltaY * ...
-                ddBlend / ...
-                maneuverTime^2;
-
-        else
-
-            trajectory.vy(j) = 0;
-
-            trajectory.ay(j) = 0;
-
-        end
-
+function trajectory=generate_2d_trajectory(ego,targetSpeedKmh,targetY,horizons,maneuverTime)
+% Acceleration-limited longitudinal motion and quintic Hermite lateral motion.
+% Preserve the measured velocity vector and current geometric curvature.
+T=max(maneuverTime,.1);
+initialVy=ego.vy; initialAy=0;
+[~,~,initialAx]=predict_ego_candidate_state(ego.x,ego.vx,targetSpeedKmh,0);
+if isfield(ego,'curvature') && abs(ego.vx)>1e-6
+    speed=hypot(ego.vx,ego.vy);
+    initialAy=(ego.curvature*speed^3+ego.vy*initialAx)/ego.vx;
+end
+b0=ego.y; b1=initialVy*T; b2=.5*initialAy*T^2; deltaY=targetY-ego.y;
+b3=10*deltaY-6*b1-3*b2;
+b4=-15*deltaY+8*b1+3*b2;
+b5=6*deltaY-3*b1-b2;
+trajectory=struct('time',horizons,'x',zeros(size(horizons)), ...
+    'y',zeros(size(horizons)),'vx',zeros(size(horizons)), ...
+    'vy',zeros(size(horizons)),'ay',zeros(size(horizons)), ...
+    'targetSpeedKmh',targetSpeedKmh,'targetY',targetY,'maneuverTime',maneuverTime);
+for j=1:numel(horizons)
+    h=horizons(j); tau=min(h/T,1);
+    [trajectory.x(j),trajectory.vx(j),~]=predict_ego_candidate_state(ego.x,ego.vx,targetSpeedKmh,h);
+    trajectory.y(j)=b0+b1*tau+b2*tau^2+b3*tau^3+b4*tau^4+b5*tau^5;
+    if h<T
+        trajectory.vy(j)=(b1+2*b2*tau+3*b3*tau^2+4*b4*tau^3+5*b5*tau^4)/T;
+        trajectory.ay(j)=(2*b2+6*b3*tau+12*b4*tau^2+20*b5*tau^3)/T^2;
     end
-
+end
 end

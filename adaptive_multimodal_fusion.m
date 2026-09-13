@@ -196,6 +196,20 @@ function fused = adaptive_multimodal_fusion( ...
         2.0 * sensorDisagreement + ...
         missingSensorPenalty;
 
+    % Renormalizing unhealthy sensors must not create greater certainty.
+    % Use the shared simulation's nominal health as the reference. A partial
+    % health loss incurs the existing 0.30 missing-modality penalty pro rata.
+    nominalHealth=[.95;1;.85];
+    measuredHealth=[health.radar;health.rgb;health.thermal];
+    retainedHealth=min(1,measuredHealth(available)./nominalHealth(available));
+    if any(retainedHealth<1-1e-12)
+        referenceWeights=nominalHealth(available)/sum(nominalHealth(available));
+        referenceConfidence=sum(referenceWeights.*confidences(available));
+        retainedFraction=sum(referenceWeights.*retainedHealth);
+        fusedConfidence=min(fusedConfidence,referenceConfidence)*retainedFraction;
+        fusedUncertainty=fusedUncertainty+.30*sum(1-retainedHealth);
+    end
+
 
     %% =====================================================
     % OUTPUT

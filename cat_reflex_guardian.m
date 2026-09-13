@@ -38,7 +38,9 @@ function command = cat_reflex_guardian( ...
 
     else
 
-        command = 'REPLAN';
+        % The planner has already selected a guarded target. Allow bounded
+        % acceleration even when the positive speed gap exceeds 5 km/h.
+        command = 'MICRO_ACCELERATE';
 
     end
 

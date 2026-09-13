@@ -1,5 +1,10 @@
 # SIH - Autonomous Driving
 
+For the current corridor-based MATLAB simulation, executable Simulink model,
+video export, and validation limits, see [Run AutoNex](docs/RUN_AUTONEX.md).
+MATLAB planner results are in `results/matlab_validation_summary.json`;
+`results/validation_summary.json` is the separate Python AEB benchmark.
+
 Autonomous driving pipeline integrating Python (perception / prediction / evaluation) with MATLAB/Simulink (planning / control), with RoadRunner scenarios for simulation.
 
 ## Project Structure

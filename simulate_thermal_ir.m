@@ -30,6 +30,7 @@ function detections = simulate_thermal_ir(ego, actors)
 
 
     for i = 1:length(actors)
+        if strcmpi(actors(i).type,'pothole'), continue; end
 
         %% Do not detect ego
 

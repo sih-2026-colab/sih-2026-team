@@ -22,7 +22,7 @@ function actors = update_highway_actors(actors, dt)
 
     cutInIndex = 3;
 
-    if actors(cutInIndex).y >= lane3
+    if strcmp(actors(cutInIndex).name,'CUT-IN') && actors(cutInIndex).y >= lane3
 
         actors(cutInIndex).y = lane3;
         actors(cutInIndex).vy = 0;

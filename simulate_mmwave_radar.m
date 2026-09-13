@@ -32,6 +32,7 @@ function detections = simulate_mmwave_radar( ...
     %% -----------------------------------------------------
 
     for i = 1:length(actors)
+        if strcmpi(actors(i).type,'pothole'), continue; end
 
         % Do not detect the ego vehicle itself
         if actors(i).id == ego.id

@@ -1,5 +1,7 @@
 function [bestIntent, found] = ...
-    find_highest_cutin_risk(tracks, ego, egoLaneY)
+    find_highest_cutin_risk(tracks, ego, egoLaneY, model)
+
+    if nargin<4, model=[]; end
 
     %% =====================================================
     % AUTONEX CUT-IN CANDIDATE SELECTION
@@ -37,6 +39,15 @@ function [bestIntent, found] = ...
                 tracks(i), ...
                 ego, ...
                 egoLaneY);
+
+        if ~isempty(model)
+            intent.heuristicProbability=intent.probability;
+            intent.learnedProbability=predict_cutin_probability(model,tracks(i),ego,egoLaneY);
+            % Conservative hybrid risk score, not a calibrated probability.
+            intent.probability=max(intent.probability,intent.learnedProbability);
+            levels={'LOW','MEDIUM','HIGH','CRITICAL'};
+            intent.level=levels{1+sum(intent.probability>=[.35 .55 .75])};
+        end
 
 
         %% -----------------------------------------------

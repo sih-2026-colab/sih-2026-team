@@ -1,5 +1,7 @@
 function acceleration = speed_tracking_controller( ...
-    currentSpeedKmh, targetSpeedKmh, command)
+    currentSpeedKmh, targetSpeedKmh, command, opts)
+
+    if nargin<4, opts=autonex_options(); end
 
     % Convert speed error from km/h to m/s
     speedError = ...
@@ -12,7 +14,7 @@ function acceleration = speed_tracking_controller( ...
 
     if strcmp(command, 'EMERGENCY_BRAKE')
 
-        acceleration = -6.0;
+        acceleration = -opts.maxDeceleration;
         return;
 
     end
@@ -30,7 +32,7 @@ function acceleration = speed_tracking_controller( ...
             Kp * speedError;
 
         acceleration = ...
-            max(acceleration, -3.5);
+            max(acceleration, -min(opts.controlledDeceleration,opts.maxDeceleration));
 
         acceleration = ...
             min(acceleration, 0);
@@ -53,7 +55,7 @@ function acceleration = speed_tracking_controller( ...
 
         % Gentle deceleration
         acceleration = ...
-            max(acceleration, -1.5);
+            max(acceleration, -min(opts.microDeceleration,opts.maxDeceleration));
 
         acceleration = ...
             min(acceleration, 0);
@@ -78,7 +80,7 @@ function acceleration = speed_tracking_controller( ...
             max(acceleration, 0);
 
         acceleration = ...
-            min(acceleration, 1.2);
+            min(acceleration, opts.maxAcceleration);
 
         return;
 
