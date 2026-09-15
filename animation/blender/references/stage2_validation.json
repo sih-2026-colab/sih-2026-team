@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "source_sha256": "de6ee9c3f43865692da8c252287e4b531a50b50e811040c0d38f66ac5b59566d",
+  "samples": 201,
+  "frames_validated": 301,
+  "objects": 850,
+  "mesh_polygons": 24791,
+  "fps": 30,
+  "render_frames": 300,
+  "motion_unchanged": true,
+  "candidates_unchanged": true,
+  "decisions_unchanged": true,
+  "unavailable_geometry_created": false,
+  "proof_frames": {
+    "hero": 4,
+    "top": 4,
+    "candidates": 4,
+    "guardian": 4
+  }
+}
