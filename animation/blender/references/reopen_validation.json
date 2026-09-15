@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "playback_reactivated": true,
+  "frames_checked": [
+    1,
+    2,
+    4,
+    91,
+    181,
+    300,
+    301
+  ],
+  "objects": 406
+}

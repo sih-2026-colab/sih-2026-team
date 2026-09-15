@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "blender": "5.1.1",
+  "source": "C:\\Users\\hp\\OneDrive\\Documents\\Custom Office Templates\\Desktop\\sih-2026\\SIH-Autonomous-Driving\\results\\animation\\missing_lane\\telemetry.json",
+  "sha256": "de6ee9c3f43865692da8c252287e4b531a50b50e811040c0d38f66ac5b59566d",
+  "samples": 201,
+  "frames_validated": 301,
+  "render_frames": 300,
+  "fps": 30,
+  "duration_seconds": 10,
+  "proof_frame": 4,
+  "stable_object_count": 406,
+  "independent_ego_csv_match": true,
+  "unavailable_geometry_fabricated": false
+}
